@@ -53,6 +53,7 @@
         *description (re/subscribe [:page.new-job/description])
         *form-of-payment (re/subscribe [:page.new-job/form-of-payment])
         *token-address (re/subscribe [:page.new-job/token-address])
+        *token-symbol (re/subscribe [:page.new-job/token-symbol])
         *with-arbiter? (re/subscribe [:page.new-job/with-arbiter?])]
     (fn []
       (let [is-bounty? (= @*type :bounty)
@@ -158,7 +159,7 @@
                 {:value @*token-address
                  :on-change #(re/dispatch [:page.new-job/set-token-address %])
                  :placeholder "Token Address"}]
-               [:div.token-label "SNT"]]
+               [:div.token-label @*token-symbol]]
               ;; TODO: retrieve token logo
               [:div.token-logo]])]]
 

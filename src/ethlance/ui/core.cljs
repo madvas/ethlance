@@ -14,8 +14,11 @@
    [ethlance.ui.util.injection :as util.injection]
    [mount.core :as mount :refer [defstate]]
    [re-frame.core :as re]
-   [re-frisk.core :as re-frisk]
-   [taoensso.timbre :as log]))
+   [taoensso.timbre :as log]
+   [district.ui.web3]
+   [ethlance.ui.config :as ui.config]
+
+   ))
 
 (enable-console-print!)
 
