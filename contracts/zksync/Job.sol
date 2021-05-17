@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 pragma experimental ABIEncoderV2;
 
 import "./Ethlance.sol";
-import "../token/ApproveAndCallFallback.sol";
+// import "../token/ApproveAndCallFallback.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 
@@ -41,9 +41,9 @@ contract Job {
   function initialize(
     Ethlance _ethlance,
     address _creator,
-    Ethlance.JobType memory _jobType,
+    Ethlance.JobType _jobType,
     Ethlance.TokenValue[] memory _offeredValues,
-    address[] _invitedArbiters
+    address[] calldata _invitedArbiters
   ) external {
   }
 
@@ -269,7 +269,7 @@ contract Job {
     uint256 _amount,
     address _token,
     bytes memory _data
-  ) external override {
+  ) external {
   }
 
 
@@ -283,7 +283,7 @@ contract Job {
     address _from,
     uint256 _tokenId,
     bytes memory _data
-  ) public override returns (bytes4) {
+  ) public returns (bytes4) {
     return bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"));
   }
 
@@ -299,7 +299,7 @@ contract Job {
     uint256 _id,
     uint256 _value,
     bytes calldata _data
-  ) external override returns (bytes4) {
+  ) external returns (bytes4) {
     return bytes4(keccak256("onERC1155Received(address,address,uint256,uint256,bytes)"));
   }
 
@@ -315,7 +315,7 @@ contract Job {
     uint256[] calldata _ids,
     uint256[] calldata _values,
     bytes calldata _data
-  ) external override returns (bytes4) {
+  ) external returns (bytes4) {
     return bytes4(keccak256("onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)"));
   }
 

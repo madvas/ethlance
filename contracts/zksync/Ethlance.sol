@@ -7,7 +7,7 @@ import "../token/ApproveAndCallFallback.sol";
 import "../proxy/MutableForwarder.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
-import "../DSAuth.sol";
+import "./ds-auth/auth.sol";
 
 
 /**
@@ -20,7 +20,7 @@ import "../DSAuth.sol";
 contract Ethlance is ApproveAndCallFallBack, IERC721Receiver, IERC1155Receiver, DSAuth {
 
   address public jobProxyTarget; // Stores address of a contract that Job proxies will be delegating to
-  mapping(address => bool) public isJob; // Stores if given address is a Job proxy contract address
+  mapping(address => bool) public isJobMap; // Stores if given address is a Job proxy contract address
 
   event JobCreated(
     address job,
@@ -146,10 +146,25 @@ contract Ethlance is ApproveAndCallFallBack, IERC721Receiver, IERC1155Receiver, 
 
 
   modifier isJob {
-    require(isJob[msg.sender], "Not a job contract address");
+    require(isJobMap[msg.sender], "Not a job contract address");
     _;
   }
 
+
+  /**
+   * @dev Sets a new address where job proxies will be delegating to
+   *
+   * Requirements:
+   *
+   * - Only authorized address can call this function
+   * - `_newJobProxyTarget` cannot be empty
+   */
+  function setJobProxyTarget(
+    address _newJobProxyTarget
+  ) external auth {
+    require(_newJobProxyTarget != address(0));
+    jobProxyTarget = _newJobProxyTarget;
+  }
 
   /**
    * @dev Contract initialization
@@ -163,7 +178,8 @@ contract Ethlance is ApproveAndCallFallBack, IERC721Receiver, IERC1155Receiver, 
     address _jobProxyTarget
   ) external {
     require(_jobProxyTarget != address(0));
-    setJobProxyTarget(_jobProxyTarget);
+    // 'this.' needed because of https://github.com/tonlabs/TON-Solidity-Compiler/issues/36
+    this.setJobProxyTarget(_jobProxyTarget);
   }
 
 
@@ -193,31 +209,29 @@ contract Ethlance is ApproveAndCallFallBack, IERC721Receiver, IERC1155Receiver, 
     address _creator,
     TokenValue[] memory _offeredValues,
     JobType _jobType,
-    address[] _invitedArbiters,
+    address[] memory _invitedArbiters,
     bytes memory _ipfsData
   ) internal {
     address newJob = address(new MutableForwarder());
-    MutableForwarder(newJob).setTarget(jobProxyTarget);
-    Job(newJob).initialize(this, _creator, _jobType, _offeredValues, _invitedArbiters);
-    emit JobCreated(newJob, Job(newJob).version(), _jobType, _creator, _offeredValues, _invitedArbiters, _ipfsData);
+    address payable newJobPayableAddress = payable(address(uint160(newJob)));
+    uint timestamp = block.number;
+    MutableForwarder(newJobPayableAddress).setTarget(jobProxyTarget);
+    Job(newJobPayableAddress).initialize(this, _creator, _jobType, _offeredValues, _invitedArbiters);
+    emit JobCreated(newJobPayableAddress, Job(newJobPayableAddress).version(), _jobType, _creator, _offeredValues, _invitedArbiters, _ipfsData, timestamp);
   }
 
 
-  /**
-   * @dev Sets a new address where job proxies will be delegating to
-   *
-   * Requirements:
-   *
-   * - Only authorized address can call this function
-   * - `_newJobProxyTarget` cannot be empty
-   */
-  function setJobProxyTarget(
-    address _newJobProxyTarget
-  ) external auth {
-    require(_newJobProxyTarget != address(0));
-    jobProxyTarget = _newJobProxyTarget;
+  // Data & two functions (zeScrutinize & zeAnswer) for sanity checking during local development
+  // Will be removed before testnet deploy
+  mapping(uint => uint) public zeKnownAnswers;
+  function zeScrutinize(uint questionId, uint answer) external {
+    zeKnownAnswers[questionId] = answer;
   }
 
+  function zeAnswer(uint questionId) external view returns(uint answer) {
+    return zeKnownAnswers[questionId] * 10;
+  }
+  // End of debugging functions
 
   /**
    * @dev Emits {QuoteForArbitrationSet} event
@@ -330,7 +344,7 @@ contract Ethlance is ApproveAndCallFallBack, IERC721Receiver, IERC1155Receiver, 
   function emitDisputeRaised(
     address _job,
     uint _invoiceId,
-    bytes _ipfsData
+    bytes calldata _ipfsData
   ) external isJob {
   }
 
@@ -433,5 +447,8 @@ contract Ethlance is ApproveAndCallFallBack, IERC721Receiver, IERC1155Receiver, 
   ) external payable {
   }
 
+  function supportsInterface(bytes4 interfaceId) external override view returns (bool) {
+    return false;
+  }
 
 }
