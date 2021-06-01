@@ -205,13 +205,17 @@ contract Ethlance is ApproveAndCallFallBack, IERC721Receiver, IERC1155Receiver, 
    * See spec :ethlance/job-created for the format of _ipfsData file
    * TODO: Add validation and step 2
    */
-  function _createJob(
+   // Make this normal (public) function because not all ERC20 support calling a function during
+   // token transfer
+   // The user pre-approves token transfer (call approve on their token contract)
+   // ERC721 (maybe 1155 too) (encode the function to be called in safeTransferFrom last parameter)
+  function createJob( // renamed _createJob => createJob (change in comments elsewhere in the file)
     address _creator,
     TokenValue[] memory _offeredValues,
     JobType _jobType,
     address[] memory _invitedArbiters,
     bytes memory _ipfsData
-  ) internal {
+  ) public {
     address newJob = address(new MutableForwarder());
     address payable newJobPayableAddress = payable(address(uint160(newJob)));
     uint timestamp = block.number;
@@ -220,6 +224,11 @@ contract Ethlance is ApproveAndCallFallBack, IERC721Receiver, IERC1155Receiver, 
     emit JobCreated(newJobPayableAddress, Job(newJobPayableAddress).version(), _jobType, _creator, _offeredValues, _invitedArbiters, _ipfsData, timestamp);
   }
 
+
+  // START of debugging functions
+  function zeSimple(uint input) external view returns(uint result) {
+    return input * 42;
+  }
 
   // Data & two functions (zeScrutinize & zeAnswer) for sanity checking during local development
   // Will be removed before testnet deploy
@@ -231,7 +240,7 @@ contract Ethlance is ApproveAndCallFallBack, IERC721Receiver, IERC1155Receiver, 
   function zeAnswer(uint questionId) external view returns(uint answer) {
     return zeKnownAnswers[questionId] * 10;
   }
-  // End of debugging functions
+  // END of debugging functions
 
   /**
    * @dev Emits {QuoteForArbitrationSet} event
