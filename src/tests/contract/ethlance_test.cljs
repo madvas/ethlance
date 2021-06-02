@@ -36,20 +36,18 @@
              ;    to subscribe to the event
              ; 2. Get the created contract address from the event
              ; 3. Inspect contract state to see that the passed params were persisted
-             ; TODO:
-             ;   Fix readme (to use the subscribe-events) https://github.com/district0x/district-server-smart-contracts#create-event-filter
              (testing "Simple calls for sanity"
                (let [result (<! (ethlance/ze-simple 111))]
-                 (is (= result 1000))
+                 (is (= result (str (* 42 111))))
                  (println "Count is " creator-addr)))
 
              (testing "Creating new job"
-               (let [creator "0xabc"
-                     offered-value {:token {:tokenContract {:tokenType "ERC20" :tokenAddress "0x123"} :tokenId 11} :value 42}
-                     job-type "GIG"
-                     arbiters ["0x456"]
-                     ipfs-data "0x789"
+               (let [creator  "0xc238fa6ccc9d226e2c49644b36914611319fc3ff"
+                     offered-value {:token {:tokenContract {:tokenType 0 :tokenAddress "0xc238fa6ccc9d226e2c49644b36914611319fc3ff"} :tokenId 11} :value 42}
+                     job-type 1
+                     arbiters ["0xc238fa6ccc9d226e2c49644b36914611319fc3ff"]
+                     ipfs-data "0xc238fa6ccc9d226e2c49644b36914611319fc3ff"
                      result (<! (ethlance/create-job creator [offered-value] job-type arbiters ipfs-data))]
-                 (is (= result 1000))
+                 (is (= result "something?"))
                  ))
              (done)))))
