@@ -6,6 +6,7 @@ import "./Ethlance.sol";
 // import "../token/ApproveAndCallFallback.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 
 /**
@@ -19,7 +20,6 @@ contract Job {
 
   uint public constant version = 1; // current version of {Job} smart-contract
   Ethlance public ethlance; // Stores address of {Ethlance} smart-contract so it can emit events there
-
 
   /**
    * @dev Contract initialization
@@ -45,6 +45,18 @@ contract Job {
     Ethlance.TokenValue[] memory _offeredValues,
     address[] calldata _invitedArbiters
   ) external {
+    require(address(_ethlance) != address(0));
+    require(_creator != address(0));
+    require(_offeredValues.length > 0);
+
+    ethlance = _ethlance;
+    for(uint i = 0; i < _offeredValues.length; i++) {
+      Ethlance.TokenValue memory offerInfo = _offeredValues[i];
+      uint offeredAmount = offerInfo.value;
+      IERC20 offeredToken = IERC20(offerInfo.token.tokenContract.tokenAddress);
+      uint depositedAmount = offeredToken.balanceOf(address(this)); // <-- or which address to use?
+      require(depositedAmount == offeredAmount);
+    }
   }
 
 

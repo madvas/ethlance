@@ -11,6 +11,7 @@ const ethlanceJobsPlaceholder = "deaddeaddeaddeaddeaddeaddeaddeaddeaddead";
 let DSGuard = requireContract("DSGuard", contracts_build_directory);
 let TestToken = requireContract("TestToken", contracts_build_directory);
 let Ethlance = requireContract("Ethlance", contracts_build_directory);
+let Job = requireContract("Job", contracts_build_directory);
 
 //
 // Deployment Functions
@@ -32,7 +33,6 @@ async function deploy_DSGuard(deployer, opts) {
   assignContract(dsGuard, "DSGuard", "ds-guard");
 }
 
-
 async function deploy_TestToken(deployer, opts) {
   console.log("Deploying TestToken...");
   await deployer.deploy(TestToken, opts.from, Object.assign(opts, {gas: 3.0e6}));
@@ -47,6 +47,11 @@ async function deploy_Ethlance(deployer, opts){
   assignContract(ethlance, "Ethlance", "ethlance");
 }
 
+async function deploy_Job(deployer, opts){
+  let job = await deployer.deploy(Job, Object.assign(opts, {gas: 6e6}));
+  assignContract(job, "Job", "job");
+}
+
 /*
   Deploy All Ethlance Contracts
  */
@@ -54,6 +59,7 @@ async function deploy_all(deployer, opts) {
   await deploy_DSGuard(deployer, opts);
   await deploy_TestToken(deployer, opts);
   await deploy_Ethlance(deployer, opts);
+  await deploy_Job(deployer, opts);
   writeSmartContracts();
 }
 
