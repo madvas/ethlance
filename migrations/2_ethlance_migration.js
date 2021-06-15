@@ -31,11 +31,11 @@ const ethlanceJobsPlaceholder = "deaddeaddeaddeaddeaddeaddeaddeaddeaddead";
 // Contract Artifacts
 //
 
-let DSGuard = requireContract("DSGuard");
-let TestToken = requireContract("TestToken");
-let StandardBounties = requireContract("StandardBounties");
-let EthlanceJobs = requireContract("EthlanceJobs");
-let EthlanceIssuer = requireContract("EthlanceIssuer");
+// let DSGuard = requireContract("DSGuard");
+// let TestToken = requireContract("TestToken");
+// let StandardBounties = requireContract("StandardBounties");
+// let EthlanceJobs = requireContract("EthlanceJobs");
+// let EthlanceIssuer = requireContract("EthlanceIssuer");
 
 //
 // Deployment Functions

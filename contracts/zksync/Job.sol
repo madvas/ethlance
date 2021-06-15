@@ -38,25 +38,48 @@ contract Job {
    *
    * TODO: Needs implementation
    */
+  // From user -> Ethlance contract (this address never changes) |ethlance proxy| -> |ethlance impl|
+  // From Ethlance contract -> job contract |job proxy (with state)| -> |job impl|
+  // When the createJob can be done in 1 transaction (User -> Ethlance ())
+  // Ethlance contract will give approval to Job contract, Job contract transfers the tokens to itself
+  //   - this is inefficient and thus better is if the Ethlance makes the transfer
+  //
+  // In all cases: ethlance contract transfers to job contract
+  //   - will do in 1 transaction when possible (approving the other transfer)
+  //   - if not, then in 2 (take preapproved from user -> Ethlance, then Ethlance -> Job)
+  // Job contract just validates that it has the contract
+  //
+  // 1. User approves first the ERC20 transfer to Ethlance contract
+  // 2. Then Ethlance does the transfer of the preapproved tokens
+  //
+  // First make ERC20 work (approve transfer from the test, then call Ethlance#createJob)
+  //
+  // We deploy new Job proxy for each new job created on the Ethlance
+  // These proxies hold the state for that particular job
+  // but they point to the same implementation deployment (contract)
+  // This way it's cheaper as during job creation only the proxy (which is
+  // basically pointer + data) needs to be deployed
   function initialize(
-    Ethlance _ethlance,
-    address _creator,
-    Ethlance.JobType _jobType,
-    Ethlance.TokenValue[] memory _offeredValues,
-    address[] calldata _invitedArbiters
+    // Ethlance _ethlance,
+    // address _creator,
+    // Ethlance.JobType _jobType,
+    // Ethlance.TokenValue[] memory _offeredValues,
+    // address[] calldata _invitedArbiters
   ) external {
-    require(address(_ethlance) != address(0));
-    require(_creator != address(0));
-    require(_offeredValues.length > 0);
+    // require(address(_ethlance) != address(0), "Ethlance can't be null");
+    // require(_creator != address(0), "Creator can't be null");
+    // require(_offeredValues.length > 0, "You must offer some tokens as pay");
 
-    ethlance = _ethlance;
-    for(uint i = 0; i < _offeredValues.length; i++) {
-      Ethlance.TokenValue memory offerInfo = _offeredValues[i];
-      uint offeredAmount = offerInfo.value;
-      IERC20 offeredToken = IERC20(offerInfo.token.tokenContract.tokenAddress);
-      uint depositedAmount = offeredToken.balanceOf(address(this)); // <-- or which address to use?
-      require(depositedAmount == offeredAmount);
-    }
+    // ethlance = _ethlance;
+    // for(uint i = 0; i < _offeredValues.length; i++) {
+    //   Ethlance.TokenValue memory offerInfo = _offeredValues[i];
+    //   // TODO: need to support (add checks for) all TokenTypes (ETH, ERC20, ...)
+    //   uint offeredAmount = offerInfo.value;
+    //   IERC20 offeredToken = IERC20(offerInfo.token.tokenContract.tokenAddress);
+    //   uint depositedAmount = offeredToken.balanceOf(address(this)); // this refers to the Job proxy
+
+    //   require(depositedAmount == offeredAmount);
+    // }
   }
 
 

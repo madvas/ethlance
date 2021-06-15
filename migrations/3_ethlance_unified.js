@@ -1,5 +1,6 @@
 // Ethlance unified contract deploy script
 const {copy, smartContractsTemplate, encodeContractEDN, linkBytecode, requireContract} = require("./utils.js");
+const web3 = require("web3");
 const fs = require("fs");
 const edn = require("jsedn");
 const {env, contracts_build_directory, smart_contracts_path, parameters} = require("../truffle.js");
@@ -8,10 +9,16 @@ const {env, contracts_build_directory, smart_contracts_path, parameters} = requi
 const ethlanceJobsPlaceholder = "deaddeaddeaddeaddeaddeaddeaddeaddeaddead";
 
 // Contract Artifacts
-let DSGuard = requireContract("DSGuard", contracts_build_directory);
-let TestToken = requireContract("TestToken", contracts_build_directory);
-let Ethlance = requireContract("Ethlance", contracts_build_directory);
-let Job = requireContract("Job", contracts_build_directory);
+// let DSGuard = requireContract("DSGuard", contracts_build_directory);
+// let TestToken = requireContract("TestToken", contracts_build_directory);
+// let Ethlance = requireContract("Ethlance", contracts_build_directory);
+// let Job = requireContract("Job", contracts_build_directory);
+
+// Require directly without making copies
+let DSGuard = artifacts.require("DSGuard");
+let TestToken = artifacts.require("TestToken");
+let Ethlance = artifacts.require("Ethlance");
+let Job = artifacts.require("Job");
 
 //
 // Deployment Functions
@@ -60,7 +67,6 @@ async function deploy_all(deployer, opts) {
   await deploy_TestToken(deployer, opts);
   await deploy_Ethlance(deployer, opts);
   await deploy_Job(deployer, opts);
-  writeSmartContracts();
 }
 
 
@@ -101,13 +107,13 @@ module.exports = async function(deployer, network, accounts) {
   const opts = {gas: gas, from: address};
 
   console.log("Ethlance Deployment Started...");
-
   await deployer;
-  console.log("@@@ using Web3 version:", web3.version.api);
+  console.log("@@@ using Web3 version:", web3.version);
   console.log("@@@ using address", address);
 
   try {
     await deploy_all(deployer, opts);
+    writeSmartContracts();
     console.log("Ethlance Deployment Finished!");
   }
   catch(error) {
