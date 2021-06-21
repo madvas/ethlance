@@ -5,7 +5,10 @@
             [cljs.test :refer-macros [deftest is testing async]]
             [district.server.web3 :refer [web3]]
             [ethlance.server.contract.ethlance :as ethlance]
-            [ethlance.shared.smart-contracts-dev :refer [smart-contracts]]
+            [ethlance.shared.smart-contracts-dev :as addresses]
+
+            [cljs-web3-next.eth :as web3-eth]
+            [district.server.smart-contracts :as smart-contracts]
             [cljs.core.async :refer [go <!]]
             [district.shared.async-helpers :refer [<?]]))
 
@@ -29,11 +32,18 @@
                      job-type 1
                      arbiters []
                      ipfs-data "0x0"
-                     job-proxy-address (get-in smart-contracts [:job :address])
+                     job-proxy-address (get-in addresses/smart-contracts [:job :address])
                      result (do
                               (println "Setting job proxy target" job-proxy-address)
                               (<! (ethlance/initialize job-proxy-address))
-                              (<! (ethlance/create-job creator [offered-value] job-type arbiters ipfs-data)))]
-                 (is (= result "OK"))
-                 ))
-             (done)))))
+                              (<! (ethlance/create-job creator [offered-value] job-type arbiters ipfs-data))
+                              (smart-contracts/subscribe-events
+                                :ethlance :JobCreated
+                                {:from-block (<! (web3-eth/get-block-number @web3)) :to-block "latest"}
+                                [(fn [_ event]
+                                   (let [args (:args event)
+                                         actual-job-type (int (:job-type args))]
+                                     (println "-----> args" args)
+                                     (is (= job-type actual-job-type))
+                                     (done)))]))
+                     ]))))))

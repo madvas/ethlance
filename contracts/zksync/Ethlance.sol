@@ -216,16 +216,15 @@ contract Ethlance is ApproveAndCallFallBack, IERC721Receiver, IERC1155Receiver, 
     address[] memory _invitedArbiters,
     bytes memory _ipfsData
   ) public returns(string memory) {
-    address newJob = address(new MutableForwarder());
+    address newJob = address(new MutableForwarder()); // This becomes the new proxy
     address payable newJobPayableAddress = payable(address(uint160(newJob)));
     uint timestamp = block.number;
     MutableForwarder(newJobPayableAddress).setTarget(jobProxyTarget);
-    // Job(newJobPayableAddress).initialize(this, _creator, _jobType, _offeredValues, _invitedArbiters);
-    Job(newJobPayableAddress).initialize();
-    // emit JobCreated(newJobPayableAddress, Job(newJobPayableAddress).version(), _jobType, _creator, _offeredValues, _invitedArbiters, _ipfsData, timestamp);
-    return "OK";
+    Job(newJobPayableAddress).initialize(this, _creator, _jobType, _offeredValues, _invitedArbiters);
+    // Job(newJobPayableAddress).initialize();
+    emit JobCreated(newJobPayableAddress, Job(newJobPayableAddress).version(), _jobType, _creator, _offeredValues, _invitedArbiters, _ipfsData, timestamp);
+    return "OK 2";
   }
-
 
   // START of debugging functions
   function zeSimple(uint input) external view returns(uint result) {

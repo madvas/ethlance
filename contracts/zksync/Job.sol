@@ -60,11 +60,11 @@ contract Job {
   // This way it's cheaper as during job creation only the proxy (which is
   // basically pointer + data) needs to be deployed
   function initialize(
-    // Ethlance _ethlance,
-    // address _creator,
-    // Ethlance.JobType _jobType,
-    // Ethlance.TokenValue[] memory _offeredValues,
-    // address[] calldata _invitedArbiters
+    Ethlance _ethlance,
+    address _creator,
+    Ethlance.JobType _jobType,
+    Ethlance.TokenValue[] memory _offeredValues,
+    address[] calldata _invitedArbiters
   ) external {
     // require(address(_ethlance) != address(0), "Ethlance can't be null");
     // require(_creator != address(0), "Creator can't be null");
