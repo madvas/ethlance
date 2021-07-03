@@ -1,46 +1,28 @@
-/*
-  Main Ethlance Deployment Script
- */
-
-const {copy, smartContractsTemplate, encodeContractEDN, linkBytecode} = require("./utils.js");
+// Ethlance unified contract deploy script
+const {copy, smartContractsTemplate, encodeContractEDN, linkBytecode, requireContract} = require("./utils.js");
+const web3 = require("web3");
 const fs = require("fs");
 const edn = require("jsedn");
 const {env, contracts_build_directory, smart_contracts_path, parameters} = require("../truffle.js");
 
-
-/*
-  Returns the contract artifact for the given `contract_name`
- */
-function requireContract(contract_name, contract_copy_name) {
-  console.log("Creating Copy of " + contract_name + " for deployment...");
-  const copy_name = contract_copy_name || contract_name + "_deployment_copy";
-  console.log("- Contract Name: " + copy_name);
-  copy(contract_name, copy_name, contracts_build_directory);
-  return artifacts.require(copy_name);
-}
-
-
-//
 // Placeholders
-//
-
-const standardBountiesPlaceholder = "feedfeedfeedfeedfeedfeedfeedfeedfeedfeed";
 const ethlanceJobsPlaceholder = "deaddeaddeaddeaddeaddeaddeaddeaddeaddead";
 
-//
 // Contract Artifacts
-//
+// let DSGuard = requireContract("DSGuard", contracts_build_directory);
+// let TestToken = requireContract("TestToken", contracts_build_directory);
+// let Ethlance = requireContract("Ethlance", contracts_build_directory);
+// let Job = requireContract("Job", contracts_build_directory);
 
-// let DSGuard = requireContract("DSGuard");
-// let TestToken = requireContract("TestToken");
-// let StandardBounties = requireContract("StandardBounties");
-// let EthlanceJobs = requireContract("EthlanceJobs");
-// let EthlanceIssuer = requireContract("EthlanceIssuer");
+// Require directly without making copies
+let DSGuard = artifacts.require("DSGuard");
+let TestToken = artifacts.require("TestToken");
+let Ethlance = artifacts.require("Ethlance");
+let Job = artifacts.require("Job");
 
 //
 // Deployment Functions
 //
-
 
 /*
   Performs a deployment of the DSGuard
@@ -58,7 +40,6 @@ async function deploy_DSGuard(deployer, opts) {
   assignContract(dsGuard, "DSGuard", "ds-guard");
 }
 
-
 async function deploy_TestToken(deployer, opts) {
   console.log("Deploying TestToken...");
   await deployer.deploy(TestToken, opts.from, Object.assign(opts, {gas: 3.0e6}));
@@ -68,31 +49,24 @@ async function deploy_TestToken(deployer, opts) {
   assignContract(token, "TestToken", "token");
 }
 
-async function deploy_EthlanceIssuer(deployer, opts){
-  let standardBounties = await deployer.deploy(StandardBounties, Object.assign(opts, {gas: 6.4e6}));
-  assignContract(standardBounties, "StandardBounties", "standard-bounties");
+async function deploy_Ethlance(deployer, opts){
+  let ethlance = await deployer.deploy(Ethlance, Object.assign(opts, {gas: 6e6}));
+  assignContract(ethlance, "Ethlance", "ethlance");
+}
 
-  let ethlanceJobs = await deployer.deploy(EthlanceJobs, Object.assign(opts, {gas: 7e6}));
-  assignContract(ethlanceJobs, "EthlanceJobs", "ethlance-jobs");
-
-  linkBytecode(EthlanceIssuer, standardBountiesPlaceholder, standardBounties.address);
-  linkBytecode(EthlanceIssuer, ethlanceJobsPlaceholder, ethlanceJobs.address);
-
-  var ethlanceIssuer = await deployer.deploy(EthlanceIssuer, Object.assign(opts, {gas: 6e6}));
-
-  assignContract(ethlanceIssuer, "EthlanceIssuer", "ethlance-issuer");
+async function deploy_Job(deployer, opts){
+  let job = await deployer.deploy(Job, Object.assign(opts, {gas: 6e6}));
+  assignContract(job, "Job", "job");
 }
 
 /*
   Deploy All Ethlance Contracts
  */
 async function deploy_all(deployer, opts) {
-
-  console.log("Skipping everything in 2_ethlance_migrations");
-  // await deploy_DSGuard(deployer, opts);
-  // await deploy_TestToken(deployer, opts);
-  // await deploy_EthlanceIssuer(deployer, opts);
-  // writeSmartContracts();
+  await deploy_DSGuard(deployer, opts);
+  await deploy_TestToken(deployer, opts);
+  await deploy_Ethlance(deployer, opts);
+  await deploy_Job(deployer, opts);
 }
 
 
@@ -127,21 +101,19 @@ function writeSmartContracts() {
 //
 // Begin Migration
 //
-
-
 module.exports = async function(deployer, network, accounts) {
   const address = accounts[0];
   const gas = 4e6;
   const opts = {gas: gas, from: address};
 
   console.log("Ethlance Deployment Started...");
-
   await deployer;
-  console.log("@@@ using Web3 version:", web3.version.api);
+  console.log("@@@ using Web3 version:", web3.version);
   console.log("@@@ using address", address);
 
   try {
     await deploy_all(deployer, opts);
+    writeSmartContracts();
     console.log("Ethlance Deployment Finished!");
   }
   catch(error) {

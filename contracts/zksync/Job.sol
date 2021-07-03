@@ -3,9 +3,10 @@ pragma solidity ^0.8.0;
 pragma experimental ABIEncoderV2;
 
 import "./Ethlance.sol";
-import "../token/ApproveAndCallFallback.sol";
+// import "../token/ApproveAndCallFallback.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 
 /**
@@ -19,7 +20,6 @@ contract Job {
 
   uint public constant version = 1; // current version of {Job} smart-contract
   Ethlance public ethlance; // Stores address of {Ethlance} smart-contract so it can emit events there
-
 
   /**
    * @dev Contract initialization
@@ -38,13 +38,48 @@ contract Job {
    *
    * TODO: Needs implementation
    */
+  // From user -> Ethlance contract (this address never changes) |ethlance proxy| -> |ethlance impl|
+  // From Ethlance contract -> job contract |job proxy (with state)| -> |job impl|
+  // When the createJob can be done in 1 transaction (User -> Ethlance ())
+  // Ethlance contract will give approval to Job contract, Job contract transfers the tokens to itself
+  //   - this is inefficient and thus better is if the Ethlance makes the transfer
+  //
+  // In all cases: ethlance contract transfers to job contract
+  //   - will do in 1 transaction when possible (approving the other transfer)
+  //   - if not, then in 2 (take preapproved from user -> Ethlance, then Ethlance -> Job)
+  // Job contract just validates that it has the contract
+  //
+  // 1. User approves first the ERC20 transfer to Ethlance contract
+  // 2. Then Ethlance does the transfer of the preapproved tokens
+  //
+  // First make ERC20 work (approve transfer from the test, then call Ethlance#createJob)
+  //
+  // We deploy new Job proxy for each new job created on the Ethlance
+  // These proxies hold the state for that particular job
+  // but they point to the same implementation deployment (contract)
+  // This way it's cheaper as during job creation only the proxy (which is
+  // basically pointer + data) needs to be deployed
   function initialize(
     Ethlance _ethlance,
     address _creator,
-    Ethlance.JobType memory _jobType,
+    Ethlance.JobType _jobType,
     Ethlance.TokenValue[] memory _offeredValues,
-    address[] _invitedArbiters
+    address[] calldata _invitedArbiters
   ) external {
+    // require(address(_ethlance) != address(0), "Ethlance can't be null");
+    // require(_creator != address(0), "Creator can't be null");
+    // require(_offeredValues.length > 0, "You must offer some tokens as pay");
+
+    // ethlance = _ethlance;
+    // for(uint i = 0; i < _offeredValues.length; i++) {
+    //   Ethlance.TokenValue memory offerInfo = _offeredValues[i];
+    //   // TODO: need to support (add checks for) all TokenTypes (ETH, ERC20, ...)
+    //   uint offeredAmount = offerInfo.value;
+    //   IERC20 offeredToken = IERC20(offerInfo.token.tokenContract.tokenAddress);
+    //   uint depositedAmount = offeredToken.balanceOf(address(this)); // this refers to the Job proxy
+
+    //   require(depositedAmount == offeredAmount);
+    // }
   }
 
 
@@ -269,7 +304,7 @@ contract Job {
     uint256 _amount,
     address _token,
     bytes memory _data
-  ) external override {
+  ) external {
   }
 
 
@@ -283,7 +318,7 @@ contract Job {
     address _from,
     uint256 _tokenId,
     bytes memory _data
-  ) public override returns (bytes4) {
+  ) public returns (bytes4) {
     return bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"));
   }
 
@@ -299,7 +334,7 @@ contract Job {
     uint256 _id,
     uint256 _value,
     bytes calldata _data
-  ) external override returns (bytes4) {
+  ) external returns (bytes4) {
     return bytes4(keccak256("onERC1155Received(address,address,uint256,uint256,bytes)"));
   }
 
@@ -315,7 +350,7 @@ contract Job {
     uint256[] calldata _ids,
     uint256[] calldata _values,
     bytes calldata _data
-  ) external override returns (bytes4) {
+  ) external returns (bytes4) {
     return bytes4(keccak256("onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)"));
   }
 
